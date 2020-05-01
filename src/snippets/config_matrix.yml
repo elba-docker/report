@@ -1,0 +1,26 @@
+tests:
+    # Indirect overhead using application benchmark (microblog)
+  - id: ii
+    replicas: 25
+    experiment: indirect_response_time
+    profile: MicroblogBareMetalC8220
+    options:
+      HOSTS_TYPE: physical
+      HARDWARE_TYPE: c8220
+    matrix:
+      - name: workload
+        values:
+          - id: b
+            options:
+              WORKLOAD_CONFIG: "conf/bursty.yml"
+          - id: s
+            options:
+              WORKLOAD_CONFIG: "conf/sustained.yml"
+      - name: tools
+        values:
+          - id: rc
+            options:
+              USE_PATCHED_DOCKER: 0
+              ENABLE_RADVISOR: 1
+              ENABLE_COLLECTL: 1
+            # additional values omitted

@@ -1,0 +1,82 @@
+\begin{adjustbox}{max width=\textwidth}
+    \begin{tikzpicture}[>=stealth]
+    
+    \newcommand{\shared}{\collection!50!\polling}
+    
+    % Locations
+    \def\Lifeline{++(0,-6.5)}
+    
+    % Lifelines
+    \path (0,0)     node[draw, fill=\polling!10]    (Polling)    {Polling Thread}
+          ++(5,0)   node[draw, fill=\polling!10]    (Docker)     {Docker Daemon}
+          ++(2.5,0) node[draw, fill=\shared!10]     (Channel)    {Channel}
+          ++(3.5,0) node[draw, fill=\collection!10] (Collection) {Collection Thread}
+          ++(4,0)   node[draw, fill=\collection!10] (Cgroupfs)   {cgroupfs};
+    \draw [dotted] (Polling) -- \Lifeline (Docker) -- \Lifeline (Channel) -- \Lifeline (Collection) -- \Lifeline (Cgroupfs) -- \Lifeline;
+    
+    % Flows
+    \path (Polling)
+          ++(0,-0.75) node (PollingLoop)       {}
+          ++(0,-0.5)  node (BeginPolling)      {}
+          ++(0,-0.75) node (BeginPollingPoll)  {}
+          ++(0,-0.75) node (ReturnPollingPoll) {}
+          ++(0,-1)    node (BeginPollingPost)  {}
+          ++(0,-0.5)  node (ReturnPollingPost) {}
+          ++(0,-0.5)  node (BeginPollingSleep) {}
+          ++(0,-0.5)  node (EndPollingSleep)   {}
+          ++(0,-0.25) node (EndPolling)        {};
+    \path (Docker)
+          ++(0,-1.75) node (BeginDocker)      {}
+          ++(0,-0.25) node (BeginDockerPoll)  {}
+          ++(0,-0.75) node (ReturnDockerPoll) {}
+          ++(0,-0.25) node (EndDocker)        {};
+    \path (Channel)
+          ++(0,-1.5)  node (BeginChannelPoll)  {}
+          ++(0,-0.75) node (ReturnChannelPoll) {}
+          ++(0,-1.5)  node (BeginChannelPost)  {}
+          ++(0,-0.5)  node (ReturnChannelPost) {};
+    \path (Collection)
+          ++(0,-0.75) node (CollectionLoop)        {}
+          ++(0,-0.5)  node (BeginCollection)       {}
+          ++(0,-0.25) node (BeginCollectionPoll)   {}
+          ++(0,-0.75) node (ReturnCollectionPoll)  {}
+          ++(0,-0.5)  node (BeginCollectionUpdate) {}
+          ++(0,-0.5)  node (EndCollectionUpdate)   {}
+          ++(0,-0.75) node (BeginCollectionRead)   {}
+          ++(0,-0.75) node (ReturnCollectionRead)  {}
+          ++(0,-0.5)  node (BeginCollectionSleep)  {}
+          ++(0,-0.5)  node (EndCollectionSleep)    {}
+          ++(0,-0.25) node (EndCollection)         {};
+    \path (Cgroupfs)
+          ++(0,-4)    node (BeginCgroupfsRead)  {}
+          ++(0,-0.75) node (ReturnCgroupfsRead) {};
+    
+    % Blocks
+    \filldraw[fill=\polling!30]    (BeginPolling.west)      rectangle (EndPolling.east);
+    \filldraw[fill=\polling!30]    (BeginDocker.west)       rectangle (EndDocker.east);
+    \filldraw[fill=\shared!30]     (BeginChannelPoll.west)  rectangle (ReturnChannelPoll.east);
+    \filldraw[fill=\shared!30]     (BeginChannelPost.west)  rectangle (ReturnChannelPost.east);
+    \filldraw[fill=\collection!30] (BeginCollection.west)   rectangle (EndCollection.east);
+    \filldraw[fill=\collection!30] (BeginCgroupfsRead.west) rectangle (ReturnCgroupfsRead.east);
+    
+    % Calls
+    \draw[->]         (BeginPollingPoll)      -- node[above,text depth=.5pt] {get running containers} (BeginDockerPoll);
+    \draw[->][dashed] (ReturnDockerPoll)      -- node[above,text depth=.5pt] {container list}         (ReturnPollingPoll);
+    \draw[->]         (BeginPollingPost)      -- node[above,text depth=.5pt] {post add/remove events} (BeginChannelPost);
+    \draw[->][dashed] (ReturnChannelPost)     -- node[above,text depth=.5pt] {}                       (ReturnPollingPost);
+    \draw[->]         (BeginCollectionPoll)   -- node[above,text depth=.5pt] {get new events}         (BeginChannelPoll);
+    \draw[->][dashed] (ReturnChannelPoll)     -- node[above,text depth=.5pt] {event list}             (ReturnCollectionPoll);
+    \draw[->]         (BeginCollectionRead)   -- node[above,text depth=.5pt] {read cgroup stats}      (BeginCgroupfsRead);
+    \draw[->][dashed] (ReturnCgroupfsRead)    -- node[above,text depth=.5pt] {stats}                  (ReturnCollectionRead);
+    \draw[->]         (BeginPollingSleep)     -- ++(1, 0) node (PollingSleepTop)     {} -- node[right=1pt,text depth=1pt] {sleep (polling interval)}    ++(0, -0.5) node (PollingSleepBottom)     {} -- (EndPollingSleep);
+    \draw[->]         (BeginCollectionUpdate) -- ++(1, 0) node (CollectionUpdateTop) {} -- node[right=1pt,text depth=1pt] {update active containers}    ++(0, -0.5) node (CollectionUpdateBottom) {} -- (EndCollectionUpdate);
+    \draw[->]         (BeginCollectionSleep)  -- ++(1, 0) node (CollectionSleepTop)  {} -- node[right=1pt,text depth=1pt] {sleep (collection interval)} ++(0, -0.5) node (CollectionSleepBottom)  {} -- (EndCollectionSleep);
+    
+    % Loop
+    \draw (PollingLoop.west)    ++(-0.625,0) rectangle ++(6.75,-5);
+    \draw (PollingLoop.west)    ++(-0.625,0) node[anchor=north west,fill=white,fill opacity=0.6,text opacity=1,draw=black] {loop};
+    \draw (CollectionLoop.west) ++(-4.45,0)  rectangle ++(10.4,-5.55);
+    \draw (CollectionLoop.west) ++(-4.45,0)  node[anchor=north west,fill=white,fill opacity=0.6,text opacity=1,draw=black] {loop};
+    
+    \end{tikzpicture}
+\end{adjustbox}

@@ -1,0 +1,74 @@
+\begin{tikzpicture}[>=stealth]
+
+\newcommand{\id}{\texttt{d58fe}\xspace}
+
+% Locations
+\def\ClientToDaemon{++(5,0)}
+\def\DaemonToClient{++(-5,0)}
+\def\DaemonToGoroutine{++(5,0)}
+\def\GoroutineToDaemon{++(-5,0)}
+\def\Lifeline{++(0,-7.75)}
+
+% Lifelines
+\path (0,0)              node[draw, fill=seablue!10]     (Client)    {API Client}
+      \ClientToDaemon    node[draw, fill=seablue!10]     (Daemon)    {Daemon}
+      \DaemonToGoroutine node[draw, fill=\newcolor!10,draw=\newcolor,text=\newcolor!30!black] (Goroutine) {Collection goroutine for \id};
+\draw [dotted] (Client) -- \Lifeline (Daemon) -- \Lifeline (Goroutine) -- \Lifeline;
+
+% Flows
+\path (Client)
+      ++(0,-0.75) node (BeginClient)      {}
+      ++(0,-0.25) node (BeginClientStart) {}
+      ++(0,-1.75) node (EndClientStart)   {}
+      ++(0,-0.25) node (EndClientInit)    {}
+      ++(0,-2.25) node (BeginClientExit)  {}
+      ++(0,-0.25) node (BeginClientStop)  {}
+      ++(0,-1.75) node (EndClientStop)    {}
+      ++(0,-0.25) node (EndClient)        {};
+\path (Daemon)
+      ++(0,-1)    node (BeginStart)          {}
+      ++(0,-0.25) node (BeginSelfStart)      {}
+      ++(0,-0.5)  node (EndSelfStart)        {}
+      ++(0,-0.75) node (BeginGoroutineStart) {}
+      ++(0,-0.25) node (EndStart)            {}
+      ++(0,-2.75) node (BeginStop)           {}
+      ++(0,-0.25) node (BeginSelfStop)       {}
+      ++(0,-0.5)  node (EndSelfStop)         {}
+      ++(0,-0.75) node (BeginGoroutineStop)  {}
+      ++(0,-0.25) node (EndStop)             {};
+\path (Goroutine)
+      ++(0,-2.5)   node (BeginGoroutine)   {}
+      ++(0,-0.25)  node (BeginSelfOpen)    {}
+      ++(0,-0.5)   node (EndSelfOpen)      {}
+      ++(0,-0.5)   node (BeginLoop)        {}
+      ++(0,-0.95)  node (BeginSelfSleep)   {}
+      ++(0,-0.5)   node (EndSelfSleep)     {}
+      ++(0,-0.5)   node (BeginSelfCollect) {}
+      ++(0,-0.5)   node (EndSelfCollect)   {}
+      ++(0,-0.825) node (EndGoroutine)     {};
+
+% Blocks
+\filldraw[fill=seablue!30]                  (BeginClient.west)     rectangle (EndClientInit.east);
+\filldraw[fill=seablue!30]                  (BeginStart.west)      rectangle (EndStart.east);
+\filldraw[fill=\newcolor!30,draw=\newcolor] (BeginGoroutine.west)  rectangle (EndGoroutine.east);
+\filldraw[fill=seablue!30]                  (BeginClientExit.west) rectangle (EndClient.east);
+\filldraw[fill=seablue!30]                  (BeginStop.west)       rectangle (EndStop.east);
+
+% Calls
+\draw[->]         (BeginClientStart.east)    -- node[above,text depth=.5pt]    {\texttt{docker start \id}} (BeginStart.west);
+\draw[->][dashed] (EndStart)                 -- node[above,text depth=.5pt]    {Successful} (EndClientStart);
+\draw[->]         (BeginSelfStart)           -- ++(1, 0) node (SelfStartTop)   {} -- node[right=1pt,text depth=1pt] {start container} ++(0, -0.5) node (SelfStartBottom) {} -- (EndSelfStart);
+\draw[->][draw=\newcolor]         (BeginGoroutineStart.east) -- node[above,text depth=.5pt,text=\newcolor]    {\texttt{go StartStatsLogs()}} (BeginGoroutine.west);
+\draw[->]         (BeginClientStop.east)     -- node[above,text depth=.5pt]    {\texttt{docker stop \id}} (BeginStop.west);
+\draw[->][dashed] (EndStop)                  -- node[above,text depth=.5pt]    {Successful} (EndClientStop);
+\draw[->]         (BeginSelfStop)            -- ++(1, 0) node (SelfStopTop)    {} -- node[right=1pt,text depth=1pt] {stop container} ++(0, -0.5) node (SelfStopBottom) {} -- (EndSelfStop);
+\draw[->][draw=\newcolor]         (BeginGoroutineStop.east)  -- node[above,text depth=.5pt,text=\newcolor]    {\texttt{StopStatsLogs()}} (EndGoroutine.west);
+\draw[->][draw=\newcolor]         (BeginSelfOpen)            -- ++(1, 0) node (SelfOpenTop)    {} -- node[text=\newcolor,right=1pt,text depth=1pt] {open log file} ++(0, -0.5) node (SelfOpenBottom) {} -- (EndSelfOpen);
+\draw[->][draw=\newcolor]         (BeginSelfSleep)         -- ++(1, 0) node (SelfSleepTop) {} -- node[text=\newcolor,right=1pt,text depth=1pt] {sleep for interval} ++(0, -0.5) node (SelfSleepBottom) {} -- (EndSelfSleep);
+\draw[->][draw=\newcolor]         (BeginSelfCollect)         -- ++(1, 0) node (SelfCollectTop) {} -- node[text=\newcolor,right=1pt,text depth=1pt] {collect to CSV} ++(0, -0.5) node (SelfCollectBottom) {} -- (EndSelfCollect);
+
+% Loop
+\draw[draw=\newcolor] (BeginLoop.west) ++(-0.375,0) rectangle ++(4.875,-2.75);
+\draw (BeginLoop.west) ++(-0.375,0) node[anchor=north west,fill=white,draw=\newcolor,fill opacity=0.8,text=\newcolor!30!black,text opacity=1] {loop};
+
+\end{tikzpicture}
